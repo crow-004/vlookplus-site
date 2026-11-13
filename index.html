@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excel Matcher — VLOOKUP that understands messy names</title>
+<meta name="description" content="Excel Matcher is VLOOKUP, upgraded: it matches rows between two spreadsheets even when names are spelled differently. Runs offline on your PC. 7-day free demo.">
+<meta property="og:title" content="Excel Matcher — VLOOKUP that understands messy names">
+<meta property="og:description" content="Match product names, company names and codes across Excel files, even when they don't match exactly. Private, offline, optional AI.">
+<meta property="og:type" content="website">
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f5f7fa;--text:#14181f;--muted:#5b6574;--line:#e2e6ec;
+  --accent:#1f6f4a;--accent-ink:#ffffff;--accent-soft:#e3f3ea;
+  --bad:#fbe3d6;--warn:#fff2c2;--ok:#d4efdc;--code:#0f1720;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1318;--bg2:#161b22;--text:#e8ecf2;--muted:#9aa5b4;--line:#28303b;
+  --accent:#3fb37f;--accent-ink:#06180f;--accent-soft:#12291f;
+  --bad:#4a2a1c;--warn:#4a3e12;--ok:#173b26;--code:#0a0d11}}
+:root[data-theme="dark"]{
+  --bg:#0f1318;--bg2:#161b22;--text:#e8ecf2;--muted:#9aa5b4;--line:#28303b;
+  --accent:#3fb37f;--accent-ink:#06180f;--accent-soft:#12291f;
+  --bad:#4a2a1c;--warn:#4a3e12;--ok:#173b26;--code:#0a0d11}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+nav{position:sticky;top:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:5}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.logo{font-weight:700;letter-spacing:-.01em;color:var(--text);text-decoration:none}
+.logo b{color:var(--accent)}
+nav ul{display:flex;gap:20px;list-style:none;margin:0;padding:0;font-size:15px}
+nav ul a{color:var(--muted);text-decoration:none}
+@media(max-width:640px){nav ul{display:none}}
+.btn{display:inline-block;padding:12px 22px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-weight:600;text-decoration:none;border:1px solid var(--accent)}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--line)}
+.btn.sm{padding:7px 14px;font-size:14px}
+section{padding:64px 0}
+section.alt{background:var(--bg2);border-block:1px solid var(--line)}
+h1{font-size:clamp(34px,6vw,56px);line-height:1.1;letter-spacing:-.03em;margin:0 0 18px}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.2;letter-spacing:-.02em;margin:0 0 12px}
+h3{font-size:18px;margin:0 0 6px}
+.lead{font-size:20px;color:var(--muted);max-width:640px}
+.hero{padding:72px 0 56px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin:28px 0 12px}
+.fine{font-size:14px;color:var(--muted)}
+.grid{display:grid;gap:20px}
+.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}
+@media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:22px}
+section.alt .card{background:var(--bg)}
+.num{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;margin-bottom:10px}
+/* таблица-демо */
+.sheet{border:1px solid var(--line);border-radius:10px;overflow:auto;background:var(--bg)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--bg2);font-weight:600;color:var(--muted);font-size:13px}
+tr:last-child td{border-bottom:0}
+.na{background:var(--bad)}.hit{background:var(--ok)}.chk{background:var(--warn)}
+.tag{font-size:12px;padding:2px 8px;border-radius:10px;display:inline-block}
+.cap{font-size:14px;color:var(--muted);margin:8px 0 0}
+.cmp td:first-child,.cmp th:first-child{white-space:normal}
+.yes{color:var(--accent);font-weight:700}.no{color:var(--muted)}
+.price{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:760px}
+@media(max-width:700px){.price{grid-template-columns:1fr}}
+.price .big{font-size:40px;font-weight:700;letter-spacing:-.02em}
+.price ul{padding-left:20px;margin:12px 0 20px;color:var(--muted)}
+.price .feat{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+details{border-bottom:1px solid var(--line);padding:14px 0}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--muted);margin:10px 0 0}
+code{background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.9em}
+footer{padding:36px 0 56px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="logo" href="#top">Excel<b>Matcher</b></a>
+  <ul><li><a href="#how">How it works</a></li><li><a href="#why">Why not VLOOKUP</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">FAQ</a></li></ul>
+  <a class="btn sm" href="#download">Start free demo</a>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap">
+  <h1>VLOOKUP, upgraded.<br>It understands messy names.</h1>
+  <p class="lead">Match products, companies and codes between two Excel files — even when the same item is spelled five different ways. No more <code>#N/A</code> walls. No formulas. Runs on your own PC.</p>
+  <div class="cta"><a class="btn" href="#download">Download the 7-day demo</a><a class="btn ghost" href="#how">See how it works</a></div>
+  <div class="fine">Windows · no installer, no Python · demo key by e-mail · your files never leave your computer</div>
+
+  <div class="grid g2" style="margin-top:44px;align-items:start">
+    <div>
+      <div class="sheet"><table aria-label="Before: VLOOKUP returns #N/A">
+        <tr><th>Name in your file</th><th>VLOOKUP</th></tr>
+        <tr><td>Coca-Cola 0.5L PET</td><td class="na">#N/A</td></tr>
+        <tr><td>Milk 3.2% 1l Parmalat</td><td class="na">#N/A</td></tr>
+        <tr><td>LED Lamp 9W E27 warm</td><td class="na">#N/A</td></tr>
+        <tr><td>Notebook A5 48 sheets</td><td class="na">#N/A</td></tr>
+      </table></div>
+      <p class="cap">Before: exact-match lookup fails on the smallest difference.</p>
+    </div>
+    <div>
+      <div class="sheet"><table aria-label="After: Excel Matcher finds the right row">
+        <tr><th>Name in your file</th><th>Excel Matcher</th><th></th></tr>
+        <tr><td>Coca-Cola 0.5L PET</td><td class="hit">Coca Cola, bottle 500 ml</td><td><span class="tag hit">confident</span></td></tr>
+        <tr><td>Milk 3.2% 1l Parmalat</td><td class="hit">Parmalat milk 3.2%, 1 L</td><td><span class="tag hit">confident</span></td></tr>
+        <tr><td>LED Lamp 9W E27 warm</td><td class="chk">LED bulb E27 9 W 3000K</td><td><span class="tag chk">review</span></td></tr>
+        <tr><td>Notebook A5 48 sheets</td><td class="hit">A5 notebook, 48 pages</td><td><span class="tag hit">confident</span></td></tr>
+      </table></div>
+      <p class="cap">After: the right row, a confidence level, and a clear “review” flag for the doubtful ones. <em>(Illustrative example.)</em></p>
+    </div>
+  </div>
+</div></header>
+
+<section class="alt" id="why"><div class="wrap">
+  <h2>VLOOKUP is the most useful function in corporate Excel.<br>Until the names don't match.</h2>
+  <p class="lead" style="margin-bottom:28px">Arguably no other formula saves as much time in a company — and none breaks as often on real-world data: extra spaces, different word order, abbreviations, typos, units written two ways. Excel Matcher keeps the idea and fixes the weak spot.</p>
+  <div class="sheet"><table class="cmp">
+    <tr><th></th><th>VLOOKUP / XLOOKUP</th><th>Excel Matcher</th></tr>
+    <tr><td>Exact text required</td><td class="no">Yes — one extra space breaks it</td><td class="yes">No — fuzzy matching</td></tr>
+    <tr><td>Word order, abbreviations, typos</td><td class="no">Not handled</td><td class="yes">Handled</td></tr>
+    <tr><td>Numbers matter (0.5 L ≠ 1 L, 9 W ≠ 12 W)</td><td class="no">—</td><td class="yes">Compared explicitly</td></tr>
+    <tr><td>Tells you how sure it is</td><td class="no">No</td><td class="yes">Confident / review / none</td></tr>
+    <tr><td>Hard cases</td><td class="no">Manual work</td><td class="yes">Optional AI picks from shortlisted candidates</td></tr>
+    <tr><td>Your original file</td><td>Formulas in your sheet</td><td class="yes">Untouched; result is a separate file</td></tr>
+  </table></div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>Three steps. No formulas.</h2>
+  <div class="grid g3" style="margin-top:24px">
+    <div class="card"><div class="num">1</div><h3>Drop two files</h3><p class="fine" style="font-size:16px">The file with the names to resolve, and the reference list they should match to. Pick sheets and columns.</p></div>
+    <div class="card"><div class="num">2</div><h3>Run the matching</h3><p class="fine" style="font-size:16px">A fast local algorithm shortlists candidates and scores them. Green: confident. Yellow: please review. Red: nothing suitable.</p></div>
+    <div class="card"><div class="num">3</div><h3>Download the result</h3><p class="fine" style="font-size:16px">An .xlsx with matches filled in and colour-coded. Your source files are never modified.</p></div>
+  </div>
+  <div class="grid g3" style="margin-top:28px">
+    <div><h3>Private by design</h3><p class="fine" style="font-size:16px">Everything runs locally. Nothing is uploaded unless you explicitly turn on AI for the disputed rows.</p></div>
+    <div><h3>Optional AI for the hard 10%</h3><p class="fine" style="font-size:16px">Bring your own key (DeepSeek or any OpenAI-compatible API). The AI only chooses among shortlisted candidates, so it can't invent names that aren't in your reference.</p></div>
+    <div><h3>English &amp; Russian interface</h3><p class="fine" style="font-size:16px">Switch language in one click. Works with Cyrillic and Latin names, mixed units and product codes.</p></div>
+  </div>
+</div></section>
+
+<section class="alt" id="pricing"><div class="wrap">
+  <h2>Try free for 7 days. Then one simple license.</h2>
+  <p class="lead" style="margin-bottom:28px">The demo is fully functional. After 7 days, activate a license key to keep going.</p>
+  <!-- TODO: подтвердить цены и условия (см. вопросы в чате) -->
+  <div class="price">
+    <div class="card"><h3>Demo</h3><div class="big">Free</div><div class="fine">7 days · all features</div>
+      <ul><li>Full matching &amp; Excel export</li><li>Optional AI step (your key)</li><li>Key arrives by e-mail</li></ul>
+      <a class="btn ghost" href="mailto:crow004@protonmail.com?subject=Excel%20Matcher%20demo%20key&body=Hello!%20Please%20send%20me%20a%207-day%20demo%20key%20for%20Excel%20Matcher.">Get the demo</a></div>
+    <div class="card feat"><h3>Pro</h3><div class="big">$49<span class="fine" style="font-size:16px;font-weight:400"> one-time</span></div><div class="fine">per user · lifetime license</div>
+      <ul><li>Everything in the demo</li><li>Works offline after activation</li><li>Key delivered to your e-mail</li></ul>
+      <a class="btn" href="mailto:crow004@protonmail.com?subject=Excel%20Matcher%20Pro%20license&body=Hello!%20I%20would%20like%20to%20buy%20an%20Excel%20Matcher%20Pro%20license." id="buy">Buy Pro</a></div>
+  </div>
+</div></section>
+
+<section id="download"><div class="wrap">
+  <h2>Start your 7-day demo</h2>
+  <p class="lead">Download, unzip, run <code>ExcelMatcher.exe</code>. Then <a href="mailto:crow004@protonmail.com?subject=Excel%20Matcher%20demo%20key&body=Hello!%20Please%20send%20me%20a%207-day%20demo%20key%20for%20Excel%20Matcher.">e-mail us for a demo key</a> (we reply by hand, usually within a day) and paste it in the app under <b>License</b>.</p>
+  <div class="cta" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px">
+    <a class="btn" href="https://github.com/crow-004/excel-matcher-site/releases/latest/download/ExcelMatcher-win.zip" id="dl">Download for Windows (zip)</a>
+  </div>
+  <p class="fine">One demo per e-mail address. We use your e-mail only to send the key and licensing notices.</p>
+  <p class="fine">Pro licenses are also issued by e-mail: <a href="mailto:crow004@protonmail.com?subject=Excel%20Matcher%20Pro%20license&body=Hello!%20I%20would%20like%20to%20buy%20an%20Excel%20Matcher%20Pro%20license.">request a Pro key</a>. Payment details are sent in the reply.</p>
+</div></section>
+
+<section class="alt" id="security"><div class="wrap">
+  <h2>License keys that are ready for the quantum era</h2>
+  <p class="lead">Keys are signed with <b>ML-DSA-65</b> (NIST FIPS 204, the lattice-based post-quantum signature standard, formerly CRYSTALS-Dilithium). The app verifies them fully offline, and the signing key lives inside a hardware-isolated enclave on our license server — it never exists in plain form outside it.</p>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>FAQ</h2>
+  <details><summary>Are my files uploaded anywhere?</summary><p>No. Matching runs on your computer. Only if you press the AI button, the names of the disputed rows (not the whole file) are sent to the AI service you configured with your own key.</p></details>
+  <details><summary>What can I match?</summary><p>Anything described by text: product names, company names, addresses, item codes with descriptions — in Latin or Cyrillic. Two .xlsx files: the one to fill and the reference list.</p></details>
+  <details><summary>How accurate is it?</summary><p>Every result carries a status — confident, review or none — so you only check what needs checking. Thresholds are adjustable. Accuracy depends on how different the two lists are; try the demo on your own data.</p></details>
+  <details><summary>Does it need internet?</summary><p>Only for the optional AI step. The key arrives by e-mail and is verified offline on your PC.</p></details>
+  <details><summary>What happens after the demo ends?</summary><p>Matching and export pause until you enter a license key. Your files and settings are untouched.</p></details>
+  <details><summary>Which systems are supported?</summary><p>Windows 10/11 today. Other platforms on request.</p></details>
+</div></section>
+
+<footer><div class="wrap">
+  <div>© <span id="y"></span> Excel Matcher · <a href="mailto:crow004@protonmail.com">crow004@protonmail.com</a></div>
+  <!-- TODO: контакты, реквизиты продавца, политика конфиденциальности, условия -->
+</div></footer>
+<script>document.getElementById("y").textContent = new Date().getFullYear()</script>
+</body>
+</html>
